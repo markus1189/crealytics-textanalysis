@@ -325,12 +325,6 @@ implicit val intMonoid: Monoid[Int] = new Monoid[Int] {
 \end{frame}
 
 \begin{frame}[fragile]
-  \begin{center}
-    \includegraphics[width=0.8\textwidth]{static-images/draw-dog.jpg}
-  \end{center}
-\end{frame}
-
-\begin{frame}[fragile]
   \frametitle{Monoids}
   \begin{center}
     \begin{minted}{scala}
@@ -339,6 +333,30 @@ Monoid.empty |+|       2 |+|       5
 Monoid.empty |+| "Hello" |+| "World"
 Monoid.empty |+| List(4) |+| List(2)
     \end{minted}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile,fragile]
+  \frametitle{Monoid Zoo}
+  \begin{tabular}{p{5cm} l}
+    \only<1->{\texttt{List[A]} & is a \texttt{Monoid} \\}
+    \only<2->{\texttt{A => B} & if \texttt{B} is a \texttt{Monoid} \\}
+    \only<3->{\texttt{(A,B)} & if \texttt{A} \textbf{and} \texttt{B} are \texttt{Monoid}s \\}
+    \only<4->{\texttt{Future[A]} & if \texttt{A} is a \texttt{Monoid} \\}
+    \only<5->{\texttt{Map[A,B]} & if \texttt{B} is a \texttt{Monoid}}
+  \end{tabular}
+  \onslide<6->
+\begin{minted}{scala}
+val m1 = Map("as" -> 21, "bs" -> 4)
+val m2 = Map("as" -> 21, "cs" -> 2)
+m1 |+| m2
+//  Map("as" -> 42, "bs" -> 4, "cs" -> 2)
+\end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{static-images/draw-dog.jpg}
   \end{center}
 \end{frame}
 
@@ -605,17 +623,36 @@ def tupleMonoid[A: Monoid, B: Monoid]: Monoid[(A, B)] =
   }
 \end{frame}
 
-\begin{frame}
-  \frametitle{More Monoids}
-  \begin{itemize}
-  \item we can do so much more!
-    \begin{itemize}
-    \item find longest word
-    \item count occurrences by word
-    \item average word length (as own monoid or derive)
-    \end{itemize}
-  \item map of key to value (for any monoid as value)
-  \end{itemize}
+\begin{frame}[fragile]
+  \frametitle{Monoids Compose (Lego Principle)}
+  \onslide<1->
+\begin{minted}{scala}
+Config => A
+\end{minted}
+  \onslide<2->
+\begin{minted}{scala}
+Config => Future[A]
+\end{minted}
+  \onslide<3->
+\begin{minted}{scala}
+Config => Future[Map[String,A]]
+\end{minted}
+  \onslide<4->
+\begin{minted}{scala}
+Config => Future[Map[String,(A,B)]]
+\end{minted}
+  \onslide<5->
+\begin{minted}{scala}
+Config => Future[Map[String,(A,Option[B])]]
+\end{minted}
+  \onslide<6->
+\begin{minted}{scala}
+Config => Future[Map[String,(Set[A],Option[B])]]
+\end{minted}
+\vfill
+\begin{itemize}
+\item<6-> yep, still a Monoid
+\end{itemize}
 \end{frame}
 
 \section{Extensions}
@@ -689,8 +726,8 @@ abstract class RDD[T] {
 \begin{minted}{scala}
 abstract class RDD[T] {
   /**
-   * Aggregate the elements of each partition,
-   * and then the results for all the partitions,
+   * .........................................
+   * ............................................
    * using a given associative function and a
    * neutral "zero value".
    */
@@ -732,12 +769,13 @@ val (words,chars,wordMap) = data.combine
   \begin{itemize}
   \item we can also integrate easily with streaming frameworks:
   \end{itemize}
+  \vspace{4mm}
   \begin{minted}{scala}
 // Using akka-streams
 def sinkFoldMap[A, M:Monoid](f: A => M): Sink[A, Future[M]] =
   Sink.fold[M, A](Monoid[M].empty)((m,a) => m |+| f(a))
   \end{minted}
-
+  \vspace{4mm}
   \begin{minted}{scala}
 // Using fs2, already built-in
 def foldMap[O2](f: O => O2)(implicit O2: Monoid[O2]): Stream[F, O2]
